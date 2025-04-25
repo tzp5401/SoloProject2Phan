@@ -77,10 +77,10 @@ public class PacManGame extends JPanel implements ActionListener, KeyListener {
         int newX = pacmanX;
         int newY = pacmanY;
 
-        if (pacmanDir == 0) newX += 2;
-        else if (pacmanDir == 2) newX -= 2;
-        else if (pacmanDir == 4) newY -= 2;
-        else if (pacmanDir == 6) newY += 2;
+        if (pacmanDir == 0) newX -= 2;        // Left
+        else if (pacmanDir == 2) newX += 2;   // Right
+        else if (pacmanDir == 4) newY -= 2;   // Up
+        else if (pacmanDir == 6) newY += 2;   // Down
 
         int row = newY / tileSize;
         int col = newX / tileSize;
@@ -139,10 +139,10 @@ public class PacManGame extends JPanel implements ActionListener, KeyListener {
 
         // Map direction to correct sprite frame
         int frame = 0;
-        if (pacmanDir == 0) frame = 3;       // Right -> second frame
-        else if (pacmanDir == 2) frame = 1;  // Left -> first frame
-        else if (pacmanDir == 4) frame = 5;  // Up -> third frame
-        else if (pacmanDir == 6) frame = 7;  // Down -> fourth frame
+        if (pacmanDir == 0) frame = 1;  // Left
+        else if (pacmanDir == 2) frame = 3;  // Right
+        else if (pacmanDir == 4) frame = 5;  // Up
+        else if (pacmanDir == 6) frame = 7;  // Down
 
         g.drawImage(pacmanSprite.getSubimage(frame * 16, 0, 16, 16), pacmanX, pacmanY, null);
     }
@@ -150,10 +150,10 @@ public class PacManGame extends JPanel implements ActionListener, KeyListener {
     @Override
     public void keyPressed(KeyEvent e) {
         int key = e.getKeyCode();
-        if (key == KeyEvent.VK_RIGHT) pacmanDir = 0;
-        if (key == KeyEvent.VK_LEFT) pacmanDir = 2;
-        if (key == KeyEvent.VK_UP) pacmanDir = 4;
-        if (key == KeyEvent.VK_DOWN) pacmanDir = 6;
+        if (key == KeyEvent.VK_LEFT)  pacmanDir = 0;
+        if (key == KeyEvent.VK_RIGHT) pacmanDir = 2;
+        if (key == KeyEvent.VK_UP)    pacmanDir = 4;
+        if (key == KeyEvent.VK_DOWN)  pacmanDir = 6;
     }
 
     public void keyReleased(KeyEvent e) {}
