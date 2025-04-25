@@ -139,10 +139,10 @@ public class PacManGame extends JPanel implements ActionListener, KeyListener {
 
         // Map direction to correct sprite frame
         int frame = 0;
-        if (pacmanDir == 0) frame = 2;       // Right -> second frame
-        else if (pacmanDir == 2) frame = 0;  // Left -> first frame
-        else if (pacmanDir == 4) frame = 4;  // Up -> third frame
-        else if (pacmanDir == 6) frame = 6;  // Down -> fourth frame
+        if (pacmanDir == 0) frame = 3;       // Right -> second frame
+        else if (pacmanDir == 2) frame = 1;  // Left -> first frame
+        else if (pacmanDir == 4) frame = 5;  // Up -> third frame
+        else if (pacmanDir == 6) frame = 7;  // Down -> fourth frame
 
         g.drawImage(pacmanSprite.getSubimage(frame * 16, 0, 16, 16), pacmanX, pacmanY, null);
     }
