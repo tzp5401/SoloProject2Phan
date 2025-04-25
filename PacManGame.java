@@ -10,18 +10,18 @@ public class PacManGame extends JPanel implements ActionListener, KeyListener {
     Timer timer;
     BufferedImage pacmanSprite;
     int pacmanX = 32, pacmanY = 32;
-    int pacmanDir = 0; // 0=right, 2=left, 4=up, 6=down
+    int pacmanDir = 0; // 0=left, 2=right, 4=up, 6=down
     int tileSize = 16;
 
-    int[][] maze = new int[20][20]; // 1 = wall, 0 = path
-    int[][] dotMap = new int[20][20]; // 0 = none, 1 = dot, 2 = power pellet
+    int[][] maze = new int[40][20]; // 40 rows, 20 columns (640x320)
+    int[][] dotMap = new int[40][20];
 
     int score = 0;
     boolean scaredMode = false;
     int scaredTimer = 0;
 
     public PacManGame() {
-        setPreferredSize(new Dimension(320, 320));
+        setPreferredSize(new Dimension(320, 640)); // Width: 320px, Height: 640px
         setBackground(Color.BLACK);
         setFocusable(true);
         addKeyListener(this);
@@ -44,27 +44,32 @@ public class PacManGame extends JPanel implements ActionListener, KeyListener {
     void loadMaze() {
         for (int i = 0; i < 20; i++) {
             maze[0][i] = 1;
-            maze[19][i] = 1;
+            maze[39][i] = 1;
+        }
+        for (int i = 0; i < 40; i++) {
             maze[i][0] = 1;
             maze[i][19] = 1;
         }
+
+        // Sample internal wall
         for (int i = 5; i < 15; i++) {
-            maze[10][i] = 1;
+            maze[20][i] = 1;
         }
     }
 
     void initDots() {
-        for (int row = 0; row < 20; row++) {
+        for (int row = 0; row < 40; row++) {
             for (int col = 0; col < 20; col++) {
                 if (maze[row][col] == 0) {
                     dotMap[row][col] = 1;
                 }
             }
         }
+
         dotMap[1][1] = 2;
         dotMap[1][18] = 2;
-        dotMap[18][1] = 2;
-        dotMap[18][18] = 2;
+        dotMap[38][1] = 2;
+        dotMap[38][18] = 2;
     }
 
     @Override
@@ -113,8 +118,8 @@ public class PacManGame extends JPanel implements ActionListener, KeyListener {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        for (int row = 0; row < 20; row++) {
-            for (int col = 0; col < 20; col++) {
+        for (int row = 0; row < maze.length; row++) {
+            for (int col = 0; col < maze[0].length; col++) {
                 if (maze[row][col] == 1) {
                     g.setColor(Color.BLUE);
                     g.fillRect(col * tileSize, row * tileSize, tileSize, tileSize);
@@ -122,8 +127,8 @@ public class PacManGame extends JPanel implements ActionListener, KeyListener {
             }
         }
 
-        for (int row = 0; row < 20; row++) {
-            for (int col = 0; col < 20; col++) {
+        for (int row = 0; row < dotMap.length; row++) {
+            for (int col = 0; col < dotMap[0].length; col++) {
                 int x = col * tileSize;
                 int y = row * tileSize;
 
