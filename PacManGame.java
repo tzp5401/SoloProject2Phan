@@ -150,8 +150,8 @@ public class PacManGame extends JPanel implements ActionListener, KeyListener {
     @Override
     public void keyPressed(KeyEvent e) {
         int key = e.getKeyCode();
-        if (key == KeyEvent.VK_LEFT) pacmanDir = 2;
         if (key == KeyEvent.VK_RIGHT) pacmanDir = 0;
+        if (key == KeyEvent.VK_LEFT) pacmanDir = 2;
         if (key == KeyEvent.VK_UP) pacmanDir = 4;
         if (key == KeyEvent.VK_DOWN) pacmanDir = 6;
     }
