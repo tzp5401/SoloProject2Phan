@@ -11,11 +11,12 @@ import javax.imageio.*;
 class Ghost {
     BufferedImage sprite;
     int x, y, dir;
+    int tileSize = 20;
 
     public Ghost(String name, String spritePath, int x, int y) {
         this.x = x;
         this.y = y;
-        this.dir = 0;
+        this.dir = (int)(Math.random() * 4); // Random start direction
         try {
             sprite = ImageIO.read(new File(spritePath));
         } catch (IOException e) {
@@ -25,20 +26,38 @@ class Ghost {
 
     public void move(int[][] maze) {
         int speed = 2;
-        int newX = x, newY = y;
-        if (dir == 0) newX -= speed;
-        else if (dir == 1) newX += speed;
-        else if (dir == 2) newY -= speed;
-        else if (dir == 3) newY += speed;
+        int nextX = x, nextY = y;
 
-        int row = newY / 20;
-        int col = newX / 20;
+        // Move according to current direction
+        if (dir == 0) nextX -= speed;
+        else if (dir == 1) nextX += speed;
+        else if (dir == 2) nextY -= speed;
+        else if (dir == 3) nextY += speed;
+
+        int row = (nextY + tileSize / 2) / tileSize;
+        int col = (nextX + tileSize / 2) / tileSize;
 
         if (maze[row][col] == 0) {
-            x = newX;
-            y = newY;
+            x = nextX;
+            y = nextY;
         } else {
             dir = (int)(Math.random() * 4);
+        }
+
+        // At intersection aligned to grid
+        if (x % tileSize == 0 && y % tileSize == 0) {
+            int[] possibleDirs = new int[4];
+            int count = 0;
+
+            // Check possible moves
+            if (maze[y / tileSize][(x - tileSize) / tileSize] == 0) possibleDirs[count++] = 0; // left
+            if (maze[y / tileSize][(x + tileSize) / tileSize] == 0) possibleDirs[count++] = 1; // right
+            if (maze[(y - tileSize) / tileSize][x / tileSize] == 0) possibleDirs[count++] = 2; // up
+            if (maze[(y + tileSize) / tileSize][x / tileSize] == 0) possibleDirs[count++] = 3; // down
+
+            if (count > 0) {
+                dir = possibleDirs[(int)(Math.random() * count)];
+            }
         }
     }
 
@@ -65,7 +84,7 @@ public class PacManGame extends JPanel implements ActionListener, KeyListener {
     boolean scaredMode = false;
     int scaredTimer = 0;
 
-    boolean inStartMenu = true;  // <-- NEW: Start menu flag
+    boolean inStartMenu = true;
 
     Ghost blinky, pinky, inky, clyde;
 
@@ -138,16 +157,16 @@ public class PacManGame extends JPanel implements ActionListener, KeyListener {
         else if (pacmanDir == 4) newY -= 3;
         else if (pacmanDir == 6) newY += 3;
 
-        int row = newY / tileSize;
-        int col = newX / tileSize;
+        int row = (newY + tileSize / 2) / tileSize;
+        int col = (newX + tileSize / 2) / tileSize;
 
         if (maze[row][col] == 0) {
             pacmanX = newX;
             pacmanY = newY;
         }
 
-        row = pacmanY / tileSize;
-        col = pacmanX / tileSize;
+        row = (pacmanY + tileSize / 2) / tileSize;
+        col = (pacmanX + tileSize / 2) / tileSize;
 
         if (dotMap[row][col] == 1) {
             dotMap[row][col] = 0;
@@ -207,7 +226,6 @@ public class PacManGame extends JPanel implements ActionListener, KeyListener {
         super.paintComponent(g);
 
         if (inStartMenu) {
-            // Draw start menu screen
             g.setColor(Color.YELLOW);
             g.setFont(new Font("Arial", Font.BOLD, 36));
             String title = "PACMAN";
@@ -218,11 +236,10 @@ public class PacManGame extends JPanel implements ActionListener, KeyListener {
             String prompt = "Press SPACE to start";
             int promptWidth = g.getFontMetrics().stringWidth(prompt);
             g.drawString(prompt, (getWidth() - promptWidth) / 2, getHeight() / 2);
-
             return;
         }
 
-        // Draw maze walls
+        // Maze
         for (int row = 0; row < maze.length; row++) {
             for (int col = 0; col < maze[0].length; col++) {
                 if (maze[row][col] == 1) {
@@ -232,7 +249,7 @@ public class PacManGame extends JPanel implements ActionListener, KeyListener {
             }
         }
 
-        // Draw dots
+        // Dots
         for (int row = 0; row < dotMap.length; row++) {
             for (int col = 0; col < dotMap[0].length; col++) {
                 int x = col * tileSize;
@@ -248,25 +265,23 @@ public class PacManGame extends JPanel implements ActionListener, KeyListener {
             }
         }
 
-        // Draw PacMan
+        // Pacman
         int frame = 0;
         if (pacmanDir == 0) frame = 1;
         else if (pacmanDir == 2) frame = 3;
         else if (pacmanDir == 4) frame = 5;
         else if (pacmanDir == 6) frame = 7;
-
         g.drawImage(pacmanSprite.getSubimage(frame * 16, 0, 16, 16), pacmanX, pacmanY, null);
 
-        // Draw ghosts
+        // Ghosts
         blinky.draw(g, scaredMode);
         pinky.draw(g, scaredMode);
         inky.draw(g, scaredMode);
         clyde.draw(g, scaredMode);
 
-        // Draw HUD
+        // HUD
         g.setColor(Color.YELLOW);
         g.setFont(new Font("Arial", Font.BOLD, 14));
-
         g.drawString("Score: " + score, 10, 15);
 
         String levelText = "Level: " + level;
@@ -281,7 +296,7 @@ public class PacManGame extends JPanel implements ActionListener, KeyListener {
     @Override
     public void keyPressed(KeyEvent e) {
         if (inStartMenu && e.getKeyCode() == KeyEvent.VK_SPACE) {
-            inStartMenu = false; // <-- START GAME!
+            inStartMenu = false;
         } else {
             int key = e.getKeyCode();
             if (key == KeyEvent.VK_LEFT) pacmanDir = 0;
