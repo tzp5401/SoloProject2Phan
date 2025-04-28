@@ -133,10 +133,10 @@ public class PacManGame extends JPanel implements ActionListener, KeyListener {
         int newX = pacmanX;
         int newY = pacmanY;
 
-        if (pacmanDir == 0) newX -= 2;
-        else if (pacmanDir == 2) newX += 2;
-        else if (pacmanDir == 4) newY -= 2;
-        else if (pacmanDir == 6) newY += 2;
+        if (pacmanDir == 0) newX -= 3;
+        else if (pacmanDir == 2) newX += 3;
+        else if (pacmanDir == 4) newY -= 3;
+        else if (pacmanDir == 6) newY += 3;
 
         int row = newY / tileSize;
         int col = newX / tileSize;
