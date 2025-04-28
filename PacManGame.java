@@ -1,9 +1,52 @@
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
 import java.io.*;
 import javax.imageio.*;
+
+// Ghost class
+class Ghost {
+    BufferedImage sprite;
+    int x, y, dir;
+
+    public Ghost(String name, String spritePath, int x, int y) {
+        this.x = x;
+        this.y = y;
+        this.dir = 0;
+        try {
+            sprite = ImageIO.read(new File(spritePath));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void move(int[][] maze) {
+        int speed = 2;
+        int newX = x, newY = y;
+        if (dir == 0) newX -= speed;
+        else if (dir == 1) newX += speed;
+        else if (dir == 2) newY -= speed;
+        else if (dir == 3) newY += speed;
+
+        int row = newY / 20;
+        int col = newX / 20;
+
+        if (maze[row][col] == 0) {
+            x = newX;
+            y = newY;
+        } else {
+            dir = (int)(Math.random() * 4);
+        }
+    }
+
+    public void draw(Graphics g, boolean scared) {
+        int frame = scared ? 1 : 0;
+        g.drawImage(sprite.getSubimage(frame * 16, 0, 16, 16), x, y, null);
+    }
+}
 
 public class PacManGame extends JPanel implements ActionListener, KeyListener {
 
@@ -13,12 +56,14 @@ public class PacManGame extends JPanel implements ActionListener, KeyListener {
     int pacmanDir = 0; // 0=left, 2=right, 4=up, 6=down
     int tileSize = 20;
 
-    int[][] maze = new int[23][23]; // 23 rows x 23 columns for 460x460
+    int[][] maze = new int[23][23];
     int[][] dotMap = new int[23][23];
 
     int score = 0;
     boolean scaredMode = false;
     int scaredTimer = 0;
+
+    Ghost blinky, pinky, inky, clyde;
 
     public PacManGame() {
         setPreferredSize(new Dimension(460, 460));
@@ -28,6 +73,11 @@ public class PacManGame extends JPanel implements ActionListener, KeyListener {
         loadResources();
         loadMaze();
         initDots();
+
+        blinky = new Ghost("Blinky", "red ghost.png", 180, 180);
+        pinky  = new Ghost("Pinky",  "pink ghost.png", 200, 180);
+        inky   = new Ghost("Inky",   "blue ghost.png", 220, 180);
+        clyde  = new Ghost("Clyde",  "orange ghost.png", 240, 180);
 
         timer = new Timer(40, this);
         timer.start();
@@ -48,8 +98,6 @@ public class PacManGame extends JPanel implements ActionListener, KeyListener {
             maze[i][0] = 1;
             maze[i][22] = 1;
         }
-
-        // Sample internal wall
         for (int i = 5; i < 18; i++) {
             maze[11][i] = 1;
         }
@@ -63,7 +111,6 @@ public class PacManGame extends JPanel implements ActionListener, KeyListener {
                 }
             }
         }
-
         dotMap[1][1] = 2;
         dotMap[1][21] = 2;
         dotMap[21][1] = 2;
@@ -99,9 +146,11 @@ public class PacManGame extends JPanel implements ActionListener, KeyListener {
         if (dotMap[row][col] == 1) {
             dotMap[row][col] = 0;
             score += 10;
+            playSound(new File("pacman_chomp.wav"));
         } else if (dotMap[row][col] == 2) {
             dotMap[row][col] = 0;
             score += 50;
+            playSound(new File("pacman_chomp.wav"));
             scaredMode = true;
             scaredTimer = 500;
         }
@@ -109,6 +158,36 @@ public class PacManGame extends JPanel implements ActionListener, KeyListener {
         if (scaredMode) {
             scaredTimer--;
             if (scaredTimer <= 0) scaredMode = false;
+        }
+
+        // Move ghosts
+        blinky.move(maze);
+        pinky.move(maze);
+        inky.move(maze);
+        clyde.move(maze);
+
+        // Check collisions
+        checkCollision(blinky);
+        checkCollision(pinky);
+        checkCollision(inky);
+        checkCollision(clyde);
+    }
+
+    void checkCollision(Ghost ghost) {
+        Rectangle pacmanRect = new Rectangle(pacmanX, pacmanY, 16, 16);
+        Rectangle ghostRect  = new Rectangle(ghost.x, ghost.y, 16, 16);
+
+        if (pacmanRect.intersects(ghostRect)) {
+            if (scaredMode) {
+                ghost.x = 180;
+                ghost.y = 180;
+                score += 200;
+                playSound(new File("pacman_eatghost.wav"));
+            } else {
+                playDeathSounds(new File("pacman_death1.wav"), new File("pacman_death2.wav"));
+                JOptionPane.showMessageDialog(this, "Game Over!\nScore: " + score);
+                System.exit(0);
+            }
         }
     }
 
@@ -121,6 +200,12 @@ public class PacManGame extends JPanel implements ActionListener, KeyListener {
                 if (maze[row][col] == 1) {
                     g.setColor(Color.BLUE);
                     g.fillRect(col * tileSize, row * tileSize, tileSize, tileSize);
+
+                    // setting score and level bar
+                    g.setColor(Color.YELLOW);
+                    g.setFont(new Font("Arial", Font.BOLD, 14));
+                    g.drawString("Score: " + score, 10, 15);
+                    g.drawString("Level: 1", getWidth() - 80, 15);
                 }
             }
         }
@@ -147,19 +232,55 @@ public class PacManGame extends JPanel implements ActionListener, KeyListener {
         else if (pacmanDir == 6) frame = 7;
 
         g.drawImage(pacmanSprite.getSubimage(frame * 16, 0, 16, 16), pacmanX, pacmanY, null);
+
+        blinky.draw(g, scaredMode);
+        pinky.draw(g, scaredMode);
+        inky.draw(g, scaredMode);
+        clyde.draw(g, scaredMode);
     }
 
     @Override
     public void keyPressed(KeyEvent e) {
         int key = e.getKeyCode();
-        if (key == KeyEvent.VK_LEFT)  pacmanDir = 0;
+        if (key == KeyEvent.VK_LEFT) pacmanDir = 0;
         if (key == KeyEvent.VK_RIGHT) pacmanDir = 2;
-        if (key == KeyEvent.VK_UP)    pacmanDir = 4;
-        if (key == KeyEvent.VK_DOWN)  pacmanDir = 6;
+        if (key == KeyEvent.VK_UP) pacmanDir = 4;
+        if (key == KeyEvent.VK_DOWN) pacmanDir = 6;
     }
 
     public void keyReleased(KeyEvent e) {}
     public void keyTyped(KeyEvent e) {}
+
+    private void playSound(File soundFile) {
+        new Thread(() -> {
+            try {
+                Clip clip = AudioSystem.getClip();
+                clip.open(AudioSystem.getAudioInputStream(soundFile));
+                clip.start();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+    private void playDeathSounds(File firstSound, File secondSound) {
+        new Thread(() -> {
+            try {
+                Clip clip1 = AudioSystem.getClip();
+                clip1.open(AudioSystem.getAudioInputStream(firstSound));
+                clip1.start();
+                Thread.sleep(clip1.getMicrosecondLength() / 1000);
+
+                Clip clip2 = AudioSystem.getClip();
+                clip2.open(AudioSystem.getAudioInputStream(secondSound));
+                clip2.start();
+                Thread.sleep(clip2.getMicrosecondLength() / 1000);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
 
     public static void main(String[] args) {
         JFrame frame = new JFrame("PacMan Game");
