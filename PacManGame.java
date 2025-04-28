@@ -60,8 +60,12 @@ public class PacManGame extends JPanel implements ActionListener, KeyListener {
     int[][] dotMap = new int[23][23];
 
     int score = 0;
+    int level = 1;
+    int lives = 3;
     boolean scaredMode = false;
     int scaredTimer = 0;
+
+    boolean inStartMenu = true;  // <-- NEW: Start menu flag
 
     Ghost blinky, pinky, inky, clyde;
 
@@ -119,7 +123,9 @@ public class PacManGame extends JPanel implements ActionListener, KeyListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        updateGame();
+        if (!inStartMenu) {
+            updateGame();
+        }
         repaint();
     }
 
@@ -160,13 +166,11 @@ public class PacManGame extends JPanel implements ActionListener, KeyListener {
             if (scaredTimer <= 0) scaredMode = false;
         }
 
-        // Move ghosts
         blinky.move(maze);
         pinky.move(maze);
         inky.move(maze);
         clyde.move(maze);
 
-        // Check collisions
         checkCollision(blinky);
         checkCollision(pinky);
         checkCollision(inky);
@@ -184,9 +188,16 @@ public class PacManGame extends JPanel implements ActionListener, KeyListener {
                 score += 200;
                 playSound(new File("pacman_eatghost.wav"));
             } else {
-                playDeathSounds(new File("pacman_death1.wav"), new File("pacman_death2.wav"));
-                JOptionPane.showMessageDialog(this, "Game Over!\nScore: " + score);
-                System.exit(0);
+                lives--;
+                if (lives <= 0) {
+                    playDeathSounds(new File("pacman_death1.wav"), new File("pacman_death2.wav"));
+                    JOptionPane.showMessageDialog(this, "Game Over!\nScore: " + score);
+                    System.exit(0);
+                } else {
+                    playDeathSounds(new File("pacman_death1.wav"), new File("pacman_death2.wav"));
+                    pacmanX = 20;
+                    pacmanY = 20;
+                }
             }
         }
     }
@@ -195,21 +206,33 @@ public class PacManGame extends JPanel implements ActionListener, KeyListener {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
+        if (inStartMenu) {
+            // Draw start menu screen
+            g.setColor(Color.YELLOW);
+            g.setFont(new Font("Arial", Font.BOLD, 36));
+            String title = "PACMAN";
+            int titleWidth = g.getFontMetrics().stringWidth(title);
+            g.drawString(title, (getWidth() - titleWidth) / 2, getHeight() / 2 - 50);
+
+            g.setFont(new Font("Arial", Font.BOLD, 18));
+            String prompt = "Press SPACE to start";
+            int promptWidth = g.getFontMetrics().stringWidth(prompt);
+            g.drawString(prompt, (getWidth() - promptWidth) / 2, getHeight() / 2);
+
+            return;
+        }
+
+        // Draw maze walls
         for (int row = 0; row < maze.length; row++) {
             for (int col = 0; col < maze[0].length; col++) {
                 if (maze[row][col] == 1) {
                     g.setColor(Color.BLUE);
                     g.fillRect(col * tileSize, row * tileSize, tileSize, tileSize);
-
-                    // setting score and level bar
-                    g.setColor(Color.YELLOW);
-                    g.setFont(new Font("Arial", Font.BOLD, 14));
-                    g.drawString("Score: " + score, 10, 15);
-                    g.drawString("Level: 1", getWidth() - 80, 15);
                 }
             }
         }
 
+        // Draw dots
         for (int row = 0; row < dotMap.length; row++) {
             for (int col = 0; col < dotMap[0].length; col++) {
                 int x = col * tileSize;
@@ -225,6 +248,7 @@ public class PacManGame extends JPanel implements ActionListener, KeyListener {
             }
         }
 
+        // Draw PacMan
         int frame = 0;
         if (pacmanDir == 0) frame = 1;
         else if (pacmanDir == 2) frame = 3;
@@ -233,19 +257,38 @@ public class PacManGame extends JPanel implements ActionListener, KeyListener {
 
         g.drawImage(pacmanSprite.getSubimage(frame * 16, 0, 16, 16), pacmanX, pacmanY, null);
 
+        // Draw ghosts
         blinky.draw(g, scaredMode);
         pinky.draw(g, scaredMode);
         inky.draw(g, scaredMode);
         clyde.draw(g, scaredMode);
+
+        // Draw HUD
+        g.setColor(Color.YELLOW);
+        g.setFont(new Font("Arial", Font.BOLD, 14));
+
+        g.drawString("Score: " + score, 10, 15);
+
+        String levelText = "Level: " + level;
+        int levelTextWidth = g.getFontMetrics().stringWidth(levelText);
+        g.drawString(levelText, (getWidth() - levelTextWidth) / 2, 15);
+
+        String livesText = "Lives: " + lives;
+        int livesTextWidth = g.getFontMetrics().stringWidth(livesText);
+        g.drawString(livesText, getWidth() - livesTextWidth - 10, 15);
     }
 
     @Override
     public void keyPressed(KeyEvent e) {
-        int key = e.getKeyCode();
-        if (key == KeyEvent.VK_LEFT) pacmanDir = 0;
-        if (key == KeyEvent.VK_RIGHT) pacmanDir = 2;
-        if (key == KeyEvent.VK_UP) pacmanDir = 4;
-        if (key == KeyEvent.VK_DOWN) pacmanDir = 6;
+        if (inStartMenu && e.getKeyCode() == KeyEvent.VK_SPACE) {
+            inStartMenu = false; // <-- START GAME!
+        } else {
+            int key = e.getKeyCode();
+            if (key == KeyEvent.VK_LEFT) pacmanDir = 0;
+            if (key == KeyEvent.VK_RIGHT) pacmanDir = 2;
+            if (key == KeyEvent.VK_UP) pacmanDir = 4;
+            if (key == KeyEvent.VK_DOWN) pacmanDir = 6;
+        }
     }
 
     public void keyReleased(KeyEvent e) {}
