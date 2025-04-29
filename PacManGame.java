@@ -71,7 +71,7 @@ public class PacManGame extends JPanel implements ActionListener, KeyListener {
 
     Timer timer;
     BufferedImage pacmanSprite;
-    int pacmanX = 20, pacmanY = 20;
+    int pacmanX = 220, pacmanY = 380;
     int pacmanDir = 0; // 0=left, 2=right, 4=up, 6=down
     int tileSize = 20;
 
@@ -214,8 +214,8 @@ public class PacManGame extends JPanel implements ActionListener, KeyListener {
                     System.exit(0);
                 } else {
                     playDeathSounds(new File("pacman_death1.wav"), new File("pacman_death2.wav"));
-                    pacmanX = 20;
-                    pacmanY = 20;
+                    pacmanX = 220;
+                    pacmanY = 380;
                 }
             }
         }
